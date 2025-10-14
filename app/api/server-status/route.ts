@@ -82,25 +82,54 @@ async function getDiscordStats() {
         if (whitelistedRole) {
           console.log(`[Discord] Found whitelisted role: ${whitelistedRole.name}`)
           
-          // Get members with specific role (limited sample for performance)
-          const membersWithRoleResponse = await fetch(
-            `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`,
-            {
+          // Try multiple approaches to get member count
+          let totalCount = 0
+          let checkedMembers = 0
+          
+          // Method 1: Search through members in batches with proper pagination
+          let afterId = ""
+          let page = 0
+          
+          while (page < 5) { // Check up to 5000 members max
+            const url = afterId 
+              ? `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000&after=${afterId}`
+              : `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`
+            
+            const membersResponse = await fetch(url, {
               headers: {
                 Authorization: `Bot ${botToken}`,
               },
               signal: AbortSignal.timeout(15000),
+            })
+            
+            if (!membersResponse.ok) {
+              console.log(`[Discord] Members page ${page} failed: ${membersResponse.status}`)
+              break
             }
-          )
-          
-          if (membersWithRoleResponse.ok) {
-            const members: DiscordMember[] = await membersWithRoleResponse.json()
-            whitelistedCount = members.filter(member => 
+            
+            const members: DiscordMember[] = await membersResponse.json()
+            if (members.length === 0) break
+            
+            checkedMembers += members.length
+            const batchCount = members.filter(member => 
               member.roles.includes(whitelistedRoleId)
             ).length
             
-            console.log(`[Discord] Found ${whitelistedCount} whitelisted members in sample of ${members.length}`)
+            totalCount += batchCount
+            
+            console.log(`[Discord] Page ${page}: ${batchCount} whitelisted in ${members.length} members`)
+            
+            // Set up for next page
+            afterId = members[members.length - 1]?.user?.id || ""
+            
+            // If we got fewer than 1000 members, we've reached the end
+            if (members.length < 1000) break
+            
+            page++
           }
+          
+          whitelistedCount = totalCount > 0 ? totalCount : null
+          console.log(`[Discord] Total: ${whitelistedCount} whitelisted members found in ${checkedMembers} total members checked`)
         }
       }
     } catch (error) {
