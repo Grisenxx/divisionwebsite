@@ -95,7 +95,6 @@ export const applicationTypes: ApplicationType[] = [
       },
     ],
   },
-    
   {
     id: "Betatester",
     name: "Beta Tester Ansøgning",
@@ -103,10 +102,26 @@ export const applicationTypes: ApplicationType[] = [
     requiredRole: "1427687620502225077", // Erstat med din Discord rolle ID
     fields: [
       {
-        id: "hvor_kan_bande_regler_findes",
-        label: "Hvor kan Division bande regelsæt findes?",
+        id: "age",
+        label: "Alder",
+        type: "number",
+        placeholder: "18",
+        required: true,
+        min: 18,
+      },
+      {
+        id: "hvorfor_dig",
+        label: "Hvorfor dig?",
         type: "textarea",
-        placeholder: "Fortæl os hvor du kan finde Division bande regelsæt...",
+        placeholder: "Fortæl os hvorfor vi skal vælge netop dig...",
+        required: true,
+        rows: 5,
+      },
+      {
+        id: "aktivitet",
+        label: "Hvor aktiv kan du være?",
+        type: "textarea",
+        placeholder: "Fortæl os hvor aktiv du kan være...",
         required: true,
         rows: 1,
       },
