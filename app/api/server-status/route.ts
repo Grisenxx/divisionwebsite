@@ -15,9 +15,82 @@ interface ServerInfo {
   sv_maxclients: number
 }
 
+interface DiscordGuild {
+  approximate_member_count: number
+}
+
+interface DiscordRole {
+  id: string
+  name: string
+}
+
+interface DiscordMember {
+  roles: string[]
+}
+
+async function getDiscordStats() {
+  const botToken = process.env.DISCORD_BOT_TOKEN
+  const guildId = process.env.DISCORD_GUILD_ID
+  const whitelistedRoleId = "1422323250339250206"
+
+  if (!botToken || !guildId) {
+    console.log("[Discord] Bot token or guild ID not configured")
+    return { discordMembers: null, whitelistedMembers: null }
+  }
+
+  try {
+    // Get total member count
+    const guildResponse = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}?with_counts=true`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    )
+
+    if (!guildResponse.ok) {
+      throw new Error(`Discord API error: ${guildResponse.status}`)
+    }
+
+    const guild: DiscordGuild = await guildResponse.json()
+
+    // Get members with the whitelisted role
+    const membersResponse = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        signal: AbortSignal.timeout(15000),
+      }
+    )
+
+    let whitelistedCount = 0
+    if (membersResponse.ok) {
+      const members: DiscordMember[] = await membersResponse.json()
+      whitelistedCount = members.filter(member => 
+        member.roles.includes(whitelistedRoleId)
+      ).length
+    }
+
+    return {
+      discordMembers: guild.approximate_member_count,
+      whitelistedMembers: whitelistedCount,
+    }
+  } catch (error) {
+    console.log("[Discord] Failed to fetch Discord stats:", error instanceof Error ? error.message : "Unknown error")
+    return { discordMembers: null, whitelistedMembers: null }
+  }
+}
+
 export async function GET() {
   const serverIp = process.env.FIVEM_SERVER_IP
   const serverPort = process.env.FIVEM_SERVER_PORT || "30120"
+
+  // Get Discord stats
+  const discordStats = await getDiscordStats()
 
   // If server IP is not configured, return offline status
   if (!serverIp) {
@@ -27,8 +100,8 @@ export async function GET() {
       maxPlayers: 64,
       online: false,
       serverName: "FiveM Server",
-      discordMembers: 1250,
-      whitelistedMembers: 847,
+      discordMembers: discordStats.discordMembers,
+      whitelistedMembers: discordStats.whitelistedMembers,
       error: "Server ikke konfigureret",
     })
   }
@@ -80,8 +153,8 @@ export async function GET() {
       serverName: info.hostname || "Division 18+",
       gametype: info.gametype || "DivisionRP.xyz",
       mapname: info.mapname || "Discord.gg/divisiondk",
-      discordMembers: 1250, // Placeholder - kan integreres med Discord API senere
-      whitelistedMembers: 847, // Placeholder - kan integreres med database senere
+      discordMembers: discordStats.discordMembers,
+      whitelistedMembers: discordStats.whitelistedMembers,
     }) 
   } catch (error) {
     console.log("[v0] Failed to fetch FiveM server status:", error instanceof Error ? error.message : "Unknown error")
@@ -94,8 +167,8 @@ export async function GET() {
       serverName: "Division 18+",
       gametype: "DivisionRP.xyz", 
       mapname: "Discord.gg/divisiondk",
-      discordMembers: 1250, // Placeholder - kan integreres med Discord API senere
-      whitelistedMembers: 847, // Placeholder - kan integreres med database senere
+      discordMembers: discordStats.discordMembers,
+      whitelistedMembers: discordStats.whitelistedMembers,
       error: "Server offline eller utilgængelig"
     })
   }

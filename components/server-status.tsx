@@ -141,28 +141,24 @@ export function ServerStatus() {
 
           {/* Additional Info */}
           {serverData.gametype && serverData.mapname && (
-            <div className="text-center p-4 bg-secondary/50 rounded-lg">
-              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  {serverData.mapname}
-                </span>
-                <span>•</span>
+            <div className="text-center p-4 bg-secondary/50 rounded-lg space-y-2">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span>{serverData.mapname}</span>
+              </div>
+              <div className="text-sm text-muted-foreground">
                 <span>{serverData.gametype}</span>
               </div>
             </div>
           )}
 
           {/* Discord and Whitelisted Members Info */}
-          <div className="text-center p-4 bg-secondary/50 rounded-lg">
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <span>
-                Antal Discord Medlemmer: {serverData.discordMembers || "-"}
-              </span>
-              <span>•</span>
-              <span>
-                Antal Whitelisted Medlemmer: {serverData.whitelistedMembers || "-"}
-              </span>
+          <div className="text-center p-4 bg-secondary/50 rounded-lg space-y-2">
+            <div className="text-sm text-muted-foreground">
+              Antal Discord Medlemmer: {serverData.discordMembers || "-"}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Antal Whitelisted Medlemmer: {serverData.whitelistedMembers || "-"}
             </div>
           </div>
         </CardContent>
