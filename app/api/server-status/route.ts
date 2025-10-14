@@ -37,8 +37,6 @@ async function getDiscordStats() {
   const guildId = process.env.DISCORD_GUILD_ID
   const whitelistedRoleId = "1422323250339250206"
 
-  console.log(`[DEBUG] Bot token exists: ${!!botToken}, Guild ID: ${guildId}`)
-
   if (!botToken || !guildId) {
     return { discordMembers: null, whitelistedMembers: null }
   }
@@ -60,12 +58,10 @@ async function getDiscordStats() {
     }
 
     const guild: DiscordGuild = await guildResponse.json()
-    console.log(`[DEBUG] Guild member count: ${guild.approximate_member_count}`)
 
     // Get ALL members to count whitelisted properly
     let whitelistedCount = 0
     let afterId = ""
-    let totalProcessed = 0
     
     // Paginate through all members
     while (true) {
@@ -73,32 +69,22 @@ async function getDiscordStats() {
         ? `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000&after=${afterId}`
         : `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`
       
-      console.log(`[DEBUG] Fetching members from: ${url.replace(botToken, 'BOT_TOKEN')}`)
-      
       const membersResponse = await fetch(url, {
         headers: {
           Authorization: `Bot ${botToken}`,
         },
         signal: AbortSignal.timeout(10000),
       })
-
-      console.log(`[DEBUG] Members response status: ${membersResponse.status}`)
       
       if (!membersResponse.ok) {
-        const errorText = await membersResponse.text()
-        console.log(`[DEBUG] Members API failed: ${membersResponse.status} - ${errorText}`)
         break
       }
 
       const members: DiscordMember[] = await membersResponse.json()
-      console.log(`[DEBUG] Got ${members.length} members in this batch`)
       
       if (members.length === 0) {
-        console.log(`[DEBUG] No members returned, stopping pagination`)
         break
       }
-
-      totalProcessed += members.length
       
       // Count whitelisted in this batch
       const batchWhitelisted = members.filter(member => 
@@ -106,7 +92,6 @@ async function getDiscordStats() {
       ).length
       
       whitelistedCount += batchWhitelisted
-      console.log(`[DEBUG] Batch ${Math.floor(totalProcessed/1000)}: ${batchWhitelisted} whitelisted in ${members.length} members`)
       
       // Set up for next batch
       afterId = members[members.length - 1]?.user?.id || ""
@@ -116,8 +101,6 @@ async function getDiscordStats() {
         break
       }
     }
-    
-    console.log(`[DEBUG] FINAL: ${whitelistedCount} whitelisted out of ${totalProcessed} total processed`)
     
     return {
       discordMembers: guild.approximate_member_count || null,
@@ -133,9 +116,7 @@ export async function GET() {
   const serverPort = process.env.FIVEM_SERVER_PORT || "30120"
 
   // Get Discord stats
-  console.log("[DEBUG] Fetching Discord stats...")
   const discordStats = await getDiscordStats()
-  console.log("[DEBUG] Discord stats result:", discordStats)
 
   // If server IP is not configured, return offline status
   if (!serverIp) {

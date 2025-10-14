@@ -158,10 +158,10 @@ export function ServerStatus() {
           <div className="text-center p-4 bg-secondary/50 rounded-lg">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
               <div>
-                Antal Discord Medlemmer: {serverData.discordMembers !== null ? serverData.discordMembers : "Indlæser..."}
+                Discord Medlemmer: {serverData.discordMembers !== null ? serverData.discordMembers : "Indlæser..."}
               </div>
               <div>
-                Antal Whitelisted Medlemmer: {serverData.whitelistedMembers !== null ? serverData.whitelistedMembers : "Tæller..."}
+                Whitelisted Medlemmer: {serverData.whitelistedMembers !== null ? serverData.whitelistedMembers : "Indlæser..."}
               </div>
             </div>
           </div>
