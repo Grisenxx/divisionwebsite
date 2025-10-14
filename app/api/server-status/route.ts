@@ -39,8 +39,12 @@ async function getDiscordStats() {
 
   if (!botToken || !guildId) {
     console.log("[Discord] Bot token or guild ID not configured")
+    console.log(`[Discord] Bot token exists: ${!!botToken}, Guild ID exists: ${!!guildId}`)
     return { discordMembers: null, whitelistedMembers: null }
   }
+
+  console.log(`[Discord] Starting API calls with Guild ID: ${guildId}`)
+  console.log(`[Discord] Looking for role ID: ${whitelistedRoleId}`)
 
   try {
     // Get total member count
@@ -55,10 +59,13 @@ async function getDiscordStats() {
     )
 
     if (!guildResponse.ok) {
+      const errorText = await guildResponse.text()
+      console.log(`[Discord] Guild API error: ${guildResponse.status} - ${errorText}`)
       throw new Error(`Discord API error: ${guildResponse.status}`)
     }
 
     const guild: DiscordGuild = await guildResponse.json()
+    console.log(`[Discord] Successfully got guild info. Member count: ${guild.approximate_member_count}`)
 
     // Try to get role information - this is more efficient than paginating through all members
     let whitelistedCount = null
@@ -77,6 +84,8 @@ async function getDiscordStats() {
 
       if (roleResponse.ok) {
         const roles: DiscordRole[] = await roleResponse.json()
+        console.log(`[Discord] Found ${roles.length} roles in guild`)
+        
         const whitelistedRole = roles.find(role => role.id === whitelistedRoleId)
         
         if (whitelistedRole) {
@@ -103,7 +112,8 @@ async function getDiscordStats() {
             })
             
             if (!membersResponse.ok) {
-              console.log(`[Discord] Members page ${page} failed: ${membersResponse.status}`)
+              const errorText = await membersResponse.text()
+              console.log(`[Discord] Members page ${page} failed: ${membersResponse.status} - ${errorText}`)
               break
             }
             
@@ -130,7 +140,13 @@ async function getDiscordStats() {
           
           whitelistedCount = totalCount > 0 ? totalCount : null
           console.log(`[Discord] Total: ${whitelistedCount} whitelisted members found in ${checkedMembers} total members checked`)
+        } else {
+          console.log(`[Discord] Whitelisted role with ID ${whitelistedRoleId} not found`)
+          console.log(`[Discord] Available roles:`, roles.map(r => `${r.name} (${r.id})`).slice(0, 5))
         }
+      } else {
+        const errorText = await roleResponse.text()
+        console.log(`[Discord] Roles API error: ${roleResponse.status} - ${errorText}`)
       }
     } catch (error) {
       console.log("[Discord] Error getting role info:", error)
