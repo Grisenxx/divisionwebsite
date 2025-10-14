@@ -23,7 +23,7 @@ export const applicationTypes: ApplicationType[] = [
     requiredRole: "1427628590580895825", // Erstat med din Discord rolle ID
     fields: [
       {
-        id: "age",
+        id: "alder",
         label: "Alder",
         type: "number",
         placeholder: "18",
@@ -179,12 +179,60 @@ export const applicationTypes: ApplicationType[] = [
     requiredRole: "1427634628742615171", // Erstat med din Discord rolle ID
     fields: [
       {
-        id: "age",
+        id: "alder",
         label: "Alder",
         type: "number",
         placeholder: "18",
         required: true,
-        min: 15,
+        min: 18,
+      },
+      {
+        id: "creator_navn",
+        label: "Hvad er dit creator navn?",
+        type: "textarea",
+        placeholder: "Angiv dit creator navn...",
+        required: true,
+        rows: 1,
+      },
+      {
+        id: "creator_platform",
+        label: "Hvilken platform laver du content på?",
+        type: "textarea",
+        placeholder: "Angiv hvilken platform du laver content på...",
+        required: true,
+        rows: 5,
+      },
+      {
+        id: "antal_folgere",
+        label: "Hvor mange følgere har du?",
+        type: "textarea",
+        placeholder: "Angiv hvor mange følgere du har...",
+        required: true,
+        rows: 5,
+      },
+      {
+        id: "gennemsnitlige_seere",
+        label: "Såfremt du streamer, hvor mange gennemsnitlige seere har du?",
+        type: "textarea",
+        placeholder: "Angiv hvor mange gennemsnitlige seere du har...",
+        required: true,
+        rows: 5,
+      },
+      {
+        id: "hvor_ofte_laver_du_content",
+        label: "Hvor ofte laver du content?",
+        type: "textarea",
+        placeholder: "Angiv hvor ofte du laver content...",
+        required: true,
+        rows: 5,
+      },
+      {
+        id: "link",
+        label: "Link til din platform?",
+        type: "textarea",
+        placeholder: "Angiv linket til din platform...",
+        required: true,
+        rows: 5,
       },
     ],
   },
