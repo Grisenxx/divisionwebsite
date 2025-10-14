@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -60,7 +56,6 @@
   --chart-4: 280 65% 60%;
   --chart-5: 340 75% 55%;
 }
-  }
 
 @layer base {
   * {
@@ -68,17 +63,6 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
