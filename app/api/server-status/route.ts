@@ -70,8 +70,10 @@ async function getDiscordStats() {
     // Paginate through all members
     while (true) {
       const url = afterId 
-        ? `https://discord.com/api/v10/guilds/${guildId}/members?limit=1500&after=${afterId}`
-        : `https://discord.com/api/v10/guilds/${guildId}/members?limit=1500`
+        ? `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000&after=${afterId}`
+        : `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`
+      
+      console.log(`[DEBUG] Fetching members from: ${url.replace(botToken, 'BOT_TOKEN')}`)
       
       const membersResponse = await fetch(url, {
         headers: {
@@ -80,12 +82,19 @@ async function getDiscordStats() {
         signal: AbortSignal.timeout(10000),
       })
 
+      console.log(`[DEBUG] Members response status: ${membersResponse.status}`)
+      
       if (!membersResponse.ok) {
+        const errorText = await membersResponse.text()
+        console.log(`[DEBUG] Members API failed: ${membersResponse.status} - ${errorText}`)
         break
       }
 
       const members: DiscordMember[] = await membersResponse.json()
+      console.log(`[DEBUG] Got ${members.length} members in this batch`)
+      
       if (members.length === 0) {
+        console.log(`[DEBUG] No members returned, stopping pagination`)
         break
       }
 
