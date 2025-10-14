@@ -161,7 +161,7 @@ export function ServerStatus() {
                 Antal Discord Medlemmer: {serverData.discordMembers !== null ? serverData.discordMembers : "Indlæser..."}
               </div>
               <div>
-                Antal Whitelisted Medlemmer: {serverData.whitelistedMembers !== null ? serverData.whitelistedMembers : "Tæller..."}
+                Antal Whitelisted Medlemmer: {serverData.whitelistedMembers !== null ? serverData.whitelistedMembers : "..."}
               </div>
             </div>
           </div>
