@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/site-header"
 import { LogIn, ArrowLeft } from "lucide-react"
 import { motion } from "motion/react"
 
-export default function ApplyPage() {
+function ApplyPageContent() {
   const { user, loading, signIn, signOut, hasRole } = useAuth()
   const searchParams = useSearchParams()
   const typeParam = searchParams.get('type')
@@ -188,5 +188,17 @@ export default function ApplyPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ApplyPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Indlæser...</p>
+      </div>
+    }>
+      <ApplyPageContent />
+    </Suspense>
   )
 }
