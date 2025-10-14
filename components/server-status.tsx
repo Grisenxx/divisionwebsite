@@ -17,6 +17,8 @@ interface ServerData {
   endpoint?: string
   connectEndPoints?: string[]
   error?: string
+  discordMembers?: number
+  whitelistedMembers?: number
 }
 
 export function ServerStatus() {
@@ -99,7 +101,7 @@ export function ServerStatus() {
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
               <Server className="h-6 w-6 text-primary" />
             </div>
-            {serverData.serverName} Server
+            {serverData.serverName}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -150,6 +152,19 @@ export function ServerStatus() {
               </div>
             </div>
           )}
+
+          {/* Discord and Whitelisted Members Info */}
+          <div className="text-center p-4 bg-secondary/50 rounded-lg">
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+              <span>
+                Antal Discord Medlemmer: {serverData.discordMembers || "-"}
+              </span>
+              <span>•</span>
+              <span>
+                Antal Whitelisted Medlemmer: {serverData.whitelistedMembers || "-"}
+              </span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -27,6 +27,8 @@ export async function GET() {
       maxPlayers: 64,
       online: false,
       serverName: "FiveM Server",
+      discordMembers: 1250,
+      whitelistedMembers: 847,
       error: "Server ikke konfigureret",
     })
   }
@@ -75,9 +77,11 @@ export async function GET() {
       players: players.length,
       maxPlayers: info.sv_maxclients || 300,
       online: true,
-      serverName: info.hostname || "Division",
-      gametype: info.gametype || "division 18+",
+      serverName: info.hostname || "Division 18+",
+      gametype: info.gametype || "DivisionRP.xyz",
       mapname: info.mapname || "Discord.gg/divisiondk",
+      discordMembers: 1250, // Placeholder - kan integreres med Discord API senere
+      whitelistedMembers: 847, // Placeholder - kan integreres med database senere
     }) 
   } catch (error) {
     console.log("[v0] Failed to fetch FiveM server status:", error instanceof Error ? error.message : "Unknown error")
@@ -87,9 +91,11 @@ export async function GET() {
       players: 0,
       maxPlayers: 300,
       online: false,
-      serverName: "Division",
-      gametype: "division 18+", 
+      serverName: "Division 18+",
+      gametype: "DivisionRP.xyz", 
       mapname: "Discord.gg/divisiondk",
+      discordMembers: 1250, // Placeholder - kan integreres med Discord API senere
+      whitelistedMembers: 847, // Placeholder - kan integreres med database senere
       error: "Server offline eller utilgængelig"
     })
   }
