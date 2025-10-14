@@ -103,12 +103,12 @@ export const applicationTypes: ApplicationType[] = [
     requiredRole: "1427687620502225077", // Erstat med din Discord rolle ID
     fields: [
       {
-        id: "age",
-        label: "Alder",
-        type: "number",
-        placeholder: "18",
+        id: "hvor_kan_bande_regler_findes",
+        label: "Hvor kan Division bande regelsæt findes?",
+        type: "textarea",
+        placeholder: "Fortæl os hvor du kan finde Division bande regelsæt...",
         required: true,
-        min: 15,
+        rows: 1,
       },
     ],
   },
