@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             // Send kun webhook besked for whitelist godkendelser
             if (webhookUrl && updated.type === "whitelist") {
               const mention = `<@${updated.discordId}>`
-              const besked = `${mention} - Din ${updated.type} ansøgning er godkendt! 🎉`
+              const besked = `${mention} - Din ${updated.type} ansøgning er godkendt!`
               
               await fetch(webhookUrl, {
                 method: "POST",
