@@ -25,6 +25,10 @@ interface DiscordRole {
 }
 
 interface DiscordMember {
+  user: {
+    id: string
+    username: string
+  }
   roles: string[]
 }
 
@@ -56,27 +60,55 @@ async function getDiscordStats() {
 
     const guild: DiscordGuild = await guildResponse.json()
 
-    // Get members with the whitelisted role
-    const membersResponse = await fetch(
-      `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`,
-      {
-        headers: {
-          Authorization: `Bot ${botToken}`,
-        },
-        signal: AbortSignal.timeout(15000),
-      }
-    )
+    // Try to get role information - this is more efficient than paginating through all members
+    let whitelistedCount = null
+    
+    try {
+      // First try to get the role info to see if we can get member count
+      const roleResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${guildId}/roles`,
+        {
+          headers: {
+            Authorization: `Bot ${botToken}`,
+          },
+          signal: AbortSignal.timeout(10000),
+        }
+      )
 
-    let whitelistedCount = 0
-    if (membersResponse.ok) {
-      const members: DiscordMember[] = await membersResponse.json()
-      whitelistedCount = members.filter(member => 
-        member.roles.includes(whitelistedRoleId)
-      ).length
+      if (roleResponse.ok) {
+        const roles: DiscordRole[] = await roleResponse.json()
+        const whitelistedRole = roles.find(role => role.id === whitelistedRoleId)
+        
+        if (whitelistedRole) {
+          console.log(`[Discord] Found whitelisted role: ${whitelistedRole.name}`)
+          
+          // Get members with specific role (limited sample for performance)
+          const membersWithRoleResponse = await fetch(
+            `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`,
+            {
+              headers: {
+                Authorization: `Bot ${botToken}`,
+              },
+              signal: AbortSignal.timeout(15000),
+            }
+          )
+          
+          if (membersWithRoleResponse.ok) {
+            const members: DiscordMember[] = await membersWithRoleResponse.json()
+            whitelistedCount = members.filter(member => 
+              member.roles.includes(whitelistedRoleId)
+            ).length
+            
+            console.log(`[Discord] Found ${whitelistedCount} whitelisted members in sample of ${members.length}`)
+          }
+        }
+      }
+    } catch (error) {
+      console.log("[Discord] Error getting role info:", error)
     }
 
     return {
-      discordMembers: guild.approximate_member_count,
+      discordMembers: guild.approximate_member_count || null,
       whitelistedMembers: whitelistedCount,
     }
   } catch (error) {
