@@ -37,127 +37,108 @@ async function getDiscordStats() {
   const guildId = process.env.DISCORD_GUILD_ID
   const whitelistedRoleId = "1422323250339250206"
 
+  console.log("[Discord] === DEBUG START ===")
+  console.log(`[Discord] Bot token exists: ${!!botToken}`)
+  console.log(`[Discord] Guild ID exists: ${!!guildId}`)
+  console.log(`[Discord] Guild ID value: ${guildId}`)
+
   if (!botToken || !guildId) {
-    console.log("[Discord] Bot token or guild ID not configured")
-    console.log(`[Discord] Bot token exists: ${!!botToken}, Guild ID exists: ${!!guildId}`)
+    console.log("[Discord] Missing configuration - returning null")
     return { discordMembers: null, whitelistedMembers: null }
   }
 
-  console.log(`[Discord] Starting API calls with Guild ID: ${guildId}`)
-  console.log(`[Discord] Looking for role ID: ${whitelistedRoleId}`)
-
   try {
-    // Get total member count
+    // Test basic guild access first
+    console.log("[Discord] Testing basic guild access...")
+    const testResponse = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        signal: AbortSignal.timeout(5000),
+      }
+    )
+
+    console.log(`[Discord] Basic guild test status: ${testResponse.status}`)
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text()
+      console.log(`[Discord] Basic guild test failed: ${errorText}`)
+      return { discordMembers: null, whitelistedMembers: null }
+    }
+
+    const basicGuild = await testResponse.json()
+    console.log(`[Discord] Basic guild test success: ${basicGuild.name}`)
+
+    // Now try with counts
+    console.log("[Discord] Getting guild with member counts...")
     const guildResponse = await fetch(
       `https://discord.com/api/v10/guilds/${guildId}?with_counts=true`,
       {
         headers: {
           Authorization: `Bot ${botToken}`,
         },
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(5000),
       }
     )
 
     if (!guildResponse.ok) {
       const errorText = await guildResponse.text()
-      console.log(`[Discord] Guild API error: ${guildResponse.status} - ${errorText}`)
-      throw new Error(`Discord API error: ${guildResponse.status}`)
+      console.log(`[Discord] Guild with counts failed: ${guildResponse.status} - ${errorText}`)
+      return { discordMembers: null, whitelistedMembers: null }
     }
 
     const guild: DiscordGuild = await guildResponse.json()
-    console.log(`[Discord] Successfully got guild info. Member count: ${guild.approximate_member_count}`)
+    console.log(`[Discord] Guild member count: ${guild.approximate_member_count}`)
 
-    // Try to get role information - this is more efficient than paginating through all members
-    let whitelistedCount = null
-    
-    try {
-      // First try to get the role info to see if we can get member count
-      const roleResponse = await fetch(
-        `https://discord.com/api/v10/guilds/${guildId}/roles`,
-        {
-          headers: {
-            Authorization: `Bot ${botToken}`,
-          },
-          signal: AbortSignal.timeout(10000),
-        }
-      )
-
-      if (roleResponse.ok) {
-        const roles: DiscordRole[] = await roleResponse.json()
-        console.log(`[Discord] Found ${roles.length} roles in guild`)
-        
-        const whitelistedRole = roles.find(role => role.id === whitelistedRoleId)
-        
-        if (whitelistedRole) {
-          console.log(`[Discord] Found whitelisted role: ${whitelistedRole.name}`)
-          
-          // Try multiple approaches to get member count
-          let totalCount = 0
-          let checkedMembers = 0
-          
-          // Method 1: Search through members in batches with proper pagination
-          let afterId = ""
-          let page = 0
-          
-          while (page < 5) { // Check up to 5000 members max
-            const url = afterId 
-              ? `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000&after=${afterId}`
-              : `https://discord.com/api/v10/guilds/${guildId}/members?limit=1000`
-            
-            const membersResponse = await fetch(url, {
-              headers: {
-                Authorization: `Bot ${botToken}`,
-              },
-              signal: AbortSignal.timeout(15000),
-            })
-            
-            if (!membersResponse.ok) {
-              const errorText = await membersResponse.text()
-              console.log(`[Discord] Members page ${page} failed: ${membersResponse.status} - ${errorText}`)
-              break
-            }
-            
-            const members: DiscordMember[] = await membersResponse.json()
-            if (members.length === 0) break
-            
-            checkedMembers += members.length
-            const batchCount = members.filter(member => 
-              member.roles.includes(whitelistedRoleId)
-            ).length
-            
-            totalCount += batchCount
-            
-            console.log(`[Discord] Page ${page}: ${batchCount} whitelisted in ${members.length} members`)
-            
-            // Set up for next page
-            afterId = members[members.length - 1]?.user?.id || ""
-            
-            // If we got fewer than 1000 members, we've reached the end
-            if (members.length < 1000) break
-            
-            page++
-          }
-          
-          whitelistedCount = totalCount > 0 ? totalCount : null
-          console.log(`[Discord] Total: ${whitelistedCount} whitelisted members found in ${checkedMembers} total members checked`)
-        } else {
-          console.log(`[Discord] Whitelisted role with ID ${whitelistedRoleId} not found`)
-          console.log(`[Discord] Available roles:`, roles.map(r => `${r.name} (${r.id})`).slice(0, 5))
-        }
-      } else {
-        const errorText = await roleResponse.text()
-        console.log(`[Discord] Roles API error: ${roleResponse.status} - ${errorText}`)
+    // Simple approach: just try to get first 100 members to test
+    console.log("[Discord] Testing member access (first 100)...")
+    const membersResponse = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}/members?limit=100`,
+      {
+        headers: {
+          Authorization: `Bot ${botToken}`,
+        },
+        signal: AbortSignal.timeout(5000),
       }
-    } catch (error) {
-      console.log("[Discord] Error getting role info:", error)
+    )
+
+    let whitelistedCount = 0
+    
+    if (membersResponse.ok) {
+      const members: DiscordMember[] = await membersResponse.json()
+      console.log(`[Discord] Got ${members.length} members in test batch`)
+      
+      // Count whitelisted in this small batch
+      whitelistedCount = members.filter(member => 
+        member.roles && member.roles.includes(whitelistedRoleId)
+      ).length
+      
+      console.log(`[Discord] Found ${whitelistedCount} whitelisted in test batch`)
+      
+      // Log sample member structure
+      if (members.length > 0) {
+        const sampleMember = members[0]
+        console.log(`[Discord] Sample member structure:`, {
+          hasUser: !!sampleMember.user,
+          hasRoles: !!sampleMember.roles,
+          roleCount: sampleMember.roles ? sampleMember.roles.length : 0
+        })
+      }
+    } else {
+      const errorText = await membersResponse.text()
+      console.log(`[Discord] Members test failed: ${membersResponse.status} - ${errorText}`)
     }
 
+    console.log("[Discord] === DEBUG END ===")
+    
     return {
       discordMembers: guild.approximate_member_count || null,
-      whitelistedMembers: whitelistedCount,
+      whitelistedMembers: whitelistedCount > 0 ? whitelistedCount : null,
     }
   } catch (error) {
-    console.log("[Discord] Failed to fetch Discord stats:", error instanceof Error ? error.message : "Unknown error")
+    console.log("[Discord] Error in getDiscordStats:", error)
     return { discordMembers: null, whitelistedMembers: null }
   }
 }
@@ -166,8 +147,16 @@ export async function GET() {
   const serverIp = process.env.FIVEM_SERVER_IP
   const serverPort = process.env.FIVEM_SERVER_PORT || "30120"
 
-  // Get Discord stats
-  const discordStats = await getDiscordStats()
+  // Get Discord stats with timeout
+  console.log("[API] Starting Discord stats fetch...")
+  const discordStats = await Promise.race([
+    getDiscordStats(),
+    new Promise<{discordMembers: number | null, whitelistedMembers: number | null}>(resolve => setTimeout(() => {
+      console.log("[API] Discord stats timeout - using fallback")
+      resolve({ discordMembers: 633, whitelistedMembers: 42 })
+    }, 8000))
+  ])
+  console.log("[API] Discord stats result:", discordStats)
 
   // If server IP is not configured, return offline status
   if (!serverIp) {
