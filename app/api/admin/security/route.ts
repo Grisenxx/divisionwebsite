@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') || 'violations'
 
@@ -97,7 +97,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
 
     // Remove IP block
     const deleteResult = await db.collection("blocked_ips").deleteMany({ ip })

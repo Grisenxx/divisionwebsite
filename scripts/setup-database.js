@@ -6,13 +6,13 @@ import dotenv from "dotenv"
 dotenv.config({ path: '.env.local' })
 
 const MONGODB_URI = process.env.MONGODB_URI
-const DATABASE_NAME = "divisionwebsite"
+const DATABASE_NAME = "divisionhjemmeside"
 
 async function setupDatabase() {
   if (!MONGODB_URI) {
     console.error("❌ MONGODB_URI ikke fundet!")
     console.error("Opret en .env.local fil i projektets rod med:")
-    console.error("MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/divisionwebsite")
+    console.error("MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/divisionhjemmeside")
     process.exit(1)
   }
 

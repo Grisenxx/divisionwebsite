@@ -6,7 +6,7 @@ import clientPromise from "../lib/mongodb.js"
 async function clearAllRateLimits() {
   try {
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
 
     // Clear all blocked IPs
     const blockedResult = await db.collection("blocked_ips").deleteMany({})

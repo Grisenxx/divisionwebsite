@@ -9,7 +9,7 @@ export async function detectAndBlockSpammer(
 ): Promise<boolean> {
   try {
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
     const now = new Date()
 
     // Record the violation
@@ -64,7 +64,7 @@ function getSeverityLevel(violationType: string): number {
 export async function isIpBlocked(ip: string): Promise<{ blocked: boolean, reason?: string }> {
   try {
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
     const now = new Date()
 
     const blockRecord = await db.collection("blocked_ips").findOne({

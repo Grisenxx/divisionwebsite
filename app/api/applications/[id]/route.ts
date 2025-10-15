@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     const sanitizedRejectionReason = rejectionReason ? sanitizeInput(rejectionReason) : undefined
 
     const client = await clientPromise
-    const db = client.db("divisionwebsite")
+    const db = client.db("divisionhjemmeside")
     
     // CRITICAL: Fetch original application and validate integrity
     const originalApp = await db.collection("applications").findOne({ id: sanitizedId })

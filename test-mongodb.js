@@ -23,7 +23,7 @@ async function testConnection() {
     console.log('✅ Forbindelse til MongoDB lykkedes!');
     
     // Test database adgang
-    const db = client.db('divisionwebsite');
+    const db = client.db('division');
     const collections = await db.listCollections().toArray();
     console.log('📄 Collections:', collections.map(c => c.name));
     
