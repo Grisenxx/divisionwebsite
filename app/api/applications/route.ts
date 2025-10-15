@@ -74,13 +74,20 @@ export async function GET(request: NextRequest) {
       .toArray()
 
     console.log(`[DEBUG] Found ${applications.length} applications for type: ${type || 'all'}`)
+    console.log(`[DEBUG] Query used:`, sanitizedQuery)
+    
     if (type === "Betatester") {
       console.log(`[DEBUG] Beta Tester applications:`, applications.map(app => ({
         id: app.id,
         discordName: app.discordName,
         status: app.status,
-        createdAt: app.createdAt
+        createdAt: app.createdAt,
+        type: app.type
       })))
+      
+      // Also check all applications to see if there are any with type Betatester
+      const allApps = await db.collection("applications").find({type: "Betatester"}).toArray()
+      console.log(`[DEBUG] All Beta Tester apps in database:`, allApps.length)
     }
 
     return NextResponse.json(applications)

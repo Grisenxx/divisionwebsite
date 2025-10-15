@@ -16,27 +16,27 @@ import Squares from "@/components/Squares"
 export default function AdminPage() {
   const { user, loading, signIn, signOut, hasRole } = useAuth()
   const router = useRouter()
-  const [selectedType, setSelectedType] = useState(applicationTypes[0]?.id)
+  const [selectedType, setSelectedType] = useState("")
   const [activeTab, setActiveTab] = useState("applications")
+
+  // Special handling for whitelist and beta tester applications - allow multiple roles
+  const hasWhitelistAccess = (type: any) => {
+    if (type.id === "whitelist") {
+      return hasRole("1422323250339250206") || // whitelisted
+             hasRole("1427634524673544232") || // whitelist modtager  
+             hasRole("1427628590580895825")    // staff
+    }
+    if (type.id === "Betatester") {
+      return hasRole("1422323250339250206") || // admin
+             hasRole("1427973710249328692")    // beta test admin
+    }
+    return type.requiredRole ? hasRole(type.requiredRole) : true
+  }
 
   useEffect(() => {
     console.log("[DEBUG] Admin page - user:", user, "loading:", loading)
     if (user) {
       console.log("[DEBUG] User roles:", user.roles)
-      
-      // Special handling for whitelist and beta tester applications - allow multiple roles
-      const hasWhitelistAccess = (type: any) => {
-        if (type.id === "whitelist") {
-          return hasRole("1422323250339250206") || // whitelisted
-                 hasRole("1427634524673544232") || // whitelist modtager  
-                 hasRole("1427628590580895825")    // staff
-        }
-        if (type.id === "Betatester") {
-          return hasRole("1422323250339250206") || // admin
-                 hasRole("1427973710249328692")    // beta test admin
-        }
-        return type.requiredRole ? hasRole(type.requiredRole) : true
-      }
       
       console.log("[DEBUG] Application types access:", applicationTypes.map(type => ({
         id: type.id,
@@ -44,8 +44,16 @@ export default function AdminPage() {
         requiredRole: type.requiredRole,
         hasAccess: hasWhitelistAccess(type)
       })))
+
+      // Set first accessible type as default if no type is selected
+      if (!selectedType) {
+        const firstAccessibleType = applicationTypes.find(type => hasWhitelistAccess(type))
+        if (firstAccessibleType) {
+          setSelectedType(firstAccessibleType.id)
+        }
+      }
     }
-  }, [user, loading, hasRole])
+  }, [user, loading, hasRole, selectedType])
 
   if (loading) {
     return (
@@ -87,28 +95,12 @@ export default function AdminPage() {
     )
   }
 
-  const currentType = applicationTypes.find((t) => t.id === selectedType)
-  
-      // Special handling for whitelist and beta tester applications - allow multiple roles
-      const hasWhitelistAccess = (type: any) => {
-        if (type.id === "whitelist") {
-          return hasRole("1422323250339250206") || // whitelisted
-                 hasRole("1427634524673544232") || // whitelist modtager  
-                 hasRole("1427628590580895825")    // staff
-        }
-        if (type.id === "Betatester") {
-          return hasRole("1422323250339250206") || // admin
-                 hasRole("1427973710249328692")    // beta test admin
-        }
-        return type.requiredRole ? hasRole(type.requiredRole) : true
-      }
-      
-  const hasAccess = currentType ? hasWhitelistAccess(currentType) : true
+  // First check if user has ANY admin role at all
+  const isAdmin = user?.roles?.some(role => 
+    ['1422323250339250206', '1427634524673544232', '1427628590580895825', '1427973710249328692'].includes(role)
+  ) ?? false
 
-  // Tjek om brugeren har adgang til mindst én ansøgningstype
-  const hasAnyAccess = applicationTypes.some((type) => hasWhitelistAccess(type))
-
-  if (!hasAnyAccess) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center relative">
         <Squares 
@@ -121,12 +113,17 @@ export default function AdminPage() {
         <Card className="w-full max-w-md relative z-10">
           <CardHeader>
             <CardTitle>Adgang Nægtet</CardTitle>
-            <CardDescription>Du har ikke de nødvendige rettigheder til at se denne side</CardDescription>
+            <CardDescription>Du har ikke de nødvendige admin rettigheder til at se denne side</CardDescription>
           </CardHeader>
         </Card>
       </div>
     )
   }
+
+  const currentType = applicationTypes.find((t) => t.id === selectedType)
+  const hasAccess = currentType ? hasWhitelistAccess(currentType) : true
+
+
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -153,7 +150,10 @@ export default function AdminPage() {
           <TabsContent value="applications">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 mb-12 max-w-4xl mx-auto">
               {applicationTypes.map((type) => {
-                const canView = !type.requiredRole || hasRole(type.requiredRole)
+                const canView = hasWhitelistAccess(type)
+                console.log(`[DEBUG] Type ${type.id} - canView: ${canView}`)
+                if (!canView) return null // Don't show types user can't access
+                
                 return (
                   <Card
                     key={type.id}
