@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
-import { rateLimit } from "@/lib/security"
-import { searchQuerySchema, sanitizeInput } from "@/lib/validation"
+import { rateLimit, verifyAdminAuth } from "@/lib/security"
+import { searchQuerySchema, sanitizeInput, sanitizeMongoQuery } from "@/lib/validation"
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +13,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: "For mange søgninger. Prøv igen senere." },
         { status: 429, headers: { 'Retry-After': '30' } }
+      )
+    }
+
+    // CRITICAL: Verify admin authentication for search access
+    const authResult = await verifyAdminAuth(request)
+    if (authResult.error) {
+      return NextResponse.json(
+        { error: "Adgang nægtet. Kun administratorer kan søge i ansøgninger." },
+        { status: authResult.status }
       )
     }
 

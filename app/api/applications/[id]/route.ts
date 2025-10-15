@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import clientPromise from "@/lib/mongodb"
 import { verifyAdminAuth, rateLimit } from "@/lib/security"
-import { applicationUpdateSchema, sanitizeInput } from "@/lib/validation"
+import { 
+  applicationUpdateSchema, 
+  sanitizeInput, 
+  validateApplicationIntegrity,
+  validateUpdatePermissions 
+} from "@/lib/validation"
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Rate limiting
+    // Enhanced rate limiting with stricter limits for admin actions
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-    const rateLimitResult = rateLimit(ip, 
-      parseInt(process.env.RATE_LIMIT_MAX || '10'),
-      parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000')
-    )
+    const rateLimitResult = rateLimit(ip, 5, 60000) // Max 5 approval actions per minute
     
     if (rateLimitResult.limited) {
       return NextResponse.json(
@@ -20,21 +22,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const requestData = await request.json()
-    const { status, rejectionReason, adminInfo } = requestData
+    const { status, rejectionReason } = requestData
     const { id } = params
 
-    // Input validation
-    try {
-      applicationUpdateSchema.parse(requestData)
-    } catch (validationError) {
-      return NextResponse.json(
-        { error: "Ugyldig input data" },
-        { status: 400 }
-      )
-    }
-
-    // Admin authentication
-    const authResult = await verifyAdminAuth(adminInfo)
+    // CRITICAL: Secure admin authentication with server-side role verification
+    const authResult = await verifyAdminAuth(request, requestData.adminInfo)
     if (authResult.error) {
       return NextResponse.json(
         { error: authResult.error },
@@ -42,37 +34,89 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       )
     }
 
-    // Sanitize input
+    const verifiedAdmin = authResult.user
+
+    // Input validation with enhanced security
+    try {
+      const cleanedData = {
+        status,
+        rejectionReason,
+        adminInfo: verifiedAdmin // Use server-verified admin data
+      }
+      applicationUpdateSchema.parse(cleanedData)
+    } catch (validationError) {
+      return NextResponse.json(
+        { error: "Ugyldig input data" },
+        { status: 400 }
+      )
+    }
+
+    // Sanitize and validate application ID
     const sanitizedId = sanitizeInput(id)
+    if (!sanitizedId.match(/^[a-f0-9]{24}$/i)) {
+      return NextResponse.json(
+        { error: "Ugyldigt ansøgnings-ID format" },
+        { status: 400 }
+      )
+    }
+
     const sanitizedRejectionReason = rejectionReason ? sanitizeInput(rejectionReason) : undefined
 
     const client = await clientPromise
     const db = client.db("divisionhjemmeside")
     
-    // Opdater status og eventuelt afvisningsgrund med sanitized data
-    const updateData: any = { 
-      status,
-      updatedAt: new Date().toISOString(),
-      updatedBy: adminInfo.discordId
+    // CRITICAL: Fetch original application and validate integrity
+    const originalApp = await db.collection("applications").findOne({ id: sanitizedId })
+    if (!originalApp) {
+      return NextResponse.json({ error: "Ansøgning ikke fundet" }, { status: 404 })
     }
+
+    // Verify admin has permission to update this application type
+    if (!verifiedAdmin || !validateUpdatePermissions(originalApp.type, verifiedAdmin.roles)) {
+      return NextResponse.json(
+        { error: "Du har ikke rettigheder til at godkende denne ansøgningstype" },
+        { status: 403 }
+      )
+    }
+
+    // Validate application data hasn't been tampered with
+    if (!validateApplicationIntegrity(originalApp, requestData)) {
+      return NextResponse.json(
+        { error: "Ulovlig datamanipulation detekteret" },
+        { status: 400 }
+      )
+    }
+    
+    // Create secure update object with sanitized data
+    const updateData: any = { 
+      status: status, // Only allow approved/rejected/pending
+      updatedAt: new Date().toISOString(),
+      updatedBy: verifiedAdmin!.discordId, // Use server-verified admin ID
+      updatedByName: verifiedAdmin!.discordName
+    }
+    
+    // Only add rejection reason if status is actually rejected and it's provided
     if (sanitizedRejectionReason && status === "rejected") {
       updateData.rejectionReason = sanitizedRejectionReason
     }
     
-    // Use sanitized ID for database query
+    // Secure database update with additional validation
     const result = await db.collection("applications").updateOne(
-      { id: sanitizedId }, 
+      { 
+        id: sanitizedId,
+        status: { $in: ["pending", "approved", "rejected"] } // Ensure valid current status
+      }, 
       { $set: updateData }
     )
     
     if (result.matchedCount === 0) {
-      return NextResponse.json({ error: "Ansøgning ikke fundet" }, { status: 404 })
+      return NextResponse.json({ error: "Ansøgning ikke fundet eller allerede behandlet" }, { status: 404 })
     }
     
-    // Hent opdateret ansøgning
+    // Hent opdateret ansøgning med sanitized query
     const updated = await db.collection("applications").findOne({ id: sanitizedId })
     if (!updated) {
-      return NextResponse.json({ error: "Ansøgning ikke fundet" }, { status: 404 })
+      return NextResponse.json({ error: "Kunne ikke hente opdateret ansøgning" }, { status: 404 })
     }
     // Håndter Discord integration baseret på status
     if (updated.status === "approved" || updated.status === "rejected") {
@@ -166,7 +210,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
                   
                   const responsibleRoleId = responsibleRoleMapping[updated.type]
                   if (responsibleRoleId) {
-                    const welcomeMessage = `## Hej, ${updated.discordName.split('#')[0]}.\nDin ansøgning er blevet læst og godkendt.\nI denne kanal vil du kunne skrive med en ansvarlig, så I kan finde ud af hvad der skal ske nu.\n\n<@&${responsibleRoleId}>\n\n> Din ansøgning:\n${Object.entries(updated.fields).map(([key, value]) => `**${key}:** ${value}`).join("\n")}`
+                    // SECURITY: Sanitize all user data in Discord messages
+                    const sanitizedUsername = sanitizeInput(updated.discordName.split('#')[0])
+                    
+                    // Sanitize application fields to prevent @everyone/@here mentions
+                    const sanitizedFields = Object.entries(updated.fields)
+                      .map(([key, value]) => {
+                        const sanitizedKey = sanitizeInput(key)
+                        const sanitizedValue = sanitizeInput(String(value))
+                        return `**${sanitizedKey}:** ${sanitizedValue}`
+                      })
+                      .join("\n")
+                    
+                    const welcomeMessage = `## Hej, ${sanitizedUsername}.\nDin ansøgning er blevet læst og godkendt.\nI denne kanal vil du kunne skrive med en ansvarlig, så I kan finde ud af hvad der skal ske nu.\n\n<@&${responsibleRoleId}>\n\n> Din ansøgning:\n${sanitizedFields}`
                     
                     await fetch(`https://discord.com/api/v10/channels/${newChannel.id}/messages`, {
                       method: "POST",
@@ -242,8 +298,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }
     }
 
-    // Send log til Discord om admin handling - brug specifik webhook for hver type
-    if (adminInfo) {
+    // Send secure log til Discord om admin handling - brug specifik webhook for hver type
+    if (verifiedAdmin) {
       try {
         // Vælg den rigtige webhook baseret på ansøgningstype
         const webhookMapping: { [key: string]: string } = {
@@ -275,15 +331,21 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           const statusEmoji = updated.status === "approved" ? "✅" : updated.status === "rejected" ? "❌" : "⏳"
           const statusText = updated.status === "approved" ? "GODKENDT" : updated.status === "rejected" ? "AFVIST" : "AFVENTENDE"
           
+          // SECURITY: Sanitize all user-controlled data in Discord messages
+          const sanitizedAdminName = sanitizeInput(verifiedAdmin!.discordName)
+          const sanitizedApplicantName = sanitizeInput(updated.discordName)
+          const sanitizedApplicationType = sanitizeInput(getApplicationTypeName(updated.type))
+          const sanitizedRejectionReason = updated.rejectionReason ? sanitizeInput(updated.rejectionReason) : null
+          
           let logMessage = `${statusEmoji} **ANSØGNING ${statusText}**\n\n`
-          logMessage += `**Admin:** <@${adminInfo.discordId}> (${adminInfo.discordName})\n`
-          logMessage += `**Ansøger:** <@${updated.discordId}> (${updated.discordName})\n`
-          logMessage += `**Type:** ${getApplicationTypeName(updated.type)}\n`
-          logMessage += `**Ansøgnings ID:** ${updated.id}\n`
+          logMessage += `**Admin:** <@${verifiedAdmin!.discordId}> (${sanitizedAdminName})\n`
+          logMessage += `**Ansøger:** <@${updated.discordId}> (${sanitizedApplicantName})\n`
+          logMessage += `**Type:** ${sanitizedApplicationType}\n`
+          logMessage += `**Ansøgnings ID:** ${sanitizeInput(updated.id)}\n`
           logMessage += `**Tid:** <t:${Math.floor(Date.now() / 1000)}:F>\n`
           
-          if (updated.status === "rejected" && updated.rejectionReason) {
-            logMessage += `**Afvisningsgrund:** ${updated.rejectionReason}\n`
+          if (updated.status === "rejected" && sanitizedRejectionReason) {
+            logMessage += `**Afvisningsgrund:** ${sanitizedRejectionReason}\n`
           }
 
           await fetch(logsWebhookUrl, {
@@ -297,7 +359,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           })
           
           const webhookType = specificWebhookUrl ? "specifik" : "fallback"
-          console.log(`📝 Loggede admin handling til ${webhookType} webhook: ${adminInfo.discordName} ${statusText} ${updated.type} ansøgning`)
+          console.log(`📝 Loggede admin handling til ${webhookType} webhook: ${sanitizedAdminName} ${statusText} ${updated.type} ansøgning`)
         }
       } catch (logError) {
         console.error("Fejl ved logging:", logError)

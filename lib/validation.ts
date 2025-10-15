@@ -20,16 +20,46 @@ export const applicationSubmissionSchema = z.object({
   fields: z.record(z.string().max(2000)) // Max 2000 chars per field
 })
 
-// Sanitize input function
+// Enhanced input sanitization with Discord mention protection
 export function sanitizeInput(input: string): string {
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
     .replace(/javascript:/gi, '') // Remove javascript: protocols
     .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .replace(/@(everyone|here)/gi, '@\u200B$1') // Prevent @everyone/@here mentions with zero-width space
+    .replace(/<@&?\d{17,19}>/g, '[rolle mention fjernet]') // Remove role/user mentions
+    .replace(/discord\.gg\/\w+/gi, '[discord invite fjernet]') // Remove Discord invites
     .trim()
 }
 
-// MongoDB injection prevention
+// Prevent application data tampering during approval process
+export function validateApplicationIntegrity(originalApp: any, submittedFields: any): boolean {
+  // Ensure core application fields cannot be modified
+  const protectedFields = ['id', 'discordId', 'discordName', 'type', 'createdAt']
+  
+  for (const field of protectedFields) {
+    if (submittedFields.hasOwnProperty(field)) {
+      console.warn(`Attempt to modify protected field: ${field}`)
+      return false
+    }
+  }
+
+  // Validate that application fields structure matches original
+  const originalFieldKeys = Object.keys(originalApp.fields || {}).sort()
+  const submittedFieldKeys = Object.keys(submittedFields.fields || {}).sort()
+  
+  // Allow fields to be missing (approval process) but not added/renamed
+  for (const key of submittedFieldKeys) {
+    if (!originalFieldKeys.includes(key)) {
+      console.warn(`Attempt to add new field during approval: ${key}`)
+      return false
+    }
+  }
+
+  return true
+}
+
+// Enhanced MongoDB injection prevention and query security
 export function sanitizeMongoQuery(query: any): any {
   if (typeof query !== 'object' || query === null) {
     return query
@@ -37,12 +67,51 @@ export function sanitizeMongoQuery(query: any): any {
   
   const sanitized: any = {}
   for (const [key, value] of Object.entries(query)) {
-    // Prevent NoSQL injection
-    if (key.startsWith('$') || key.includes('.')) {
-      continue // Skip potentially dangerous operators
+    // Prevent NoSQL injection - strict allowlist approach
+    if (key.startsWith('$') || key.includes('.') || key.includes('\0')) {
+      console.warn(`Blocked potentially malicious MongoDB key: ${key}`)
+      continue
     }
-    sanitized[key] = typeof value === 'string' ? sanitizeInput(value) : value
+
+    // Recursively sanitize nested objects
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      sanitized[key] = sanitizeMongoQuery(value)
+    } else if (typeof value === 'string') {
+      sanitized[key] = sanitizeInput(value)
+    } else if (Array.isArray(value)) {
+      // Sanitize array values
+      sanitized[key] = value.map(item => 
+        typeof item === 'string' ? sanitizeInput(item) : 
+        typeof item === 'object' ? sanitizeMongoQuery(item) : item
+      )
+    } else {
+      sanitized[key] = value
+    }
   }
   
   return sanitized
+}
+
+// Generate secure MongoDB ObjectId-like string for application IDs
+export function generateSecureId(): string {
+  const timestamp = Math.floor(Date.now() / 1000).toString(16)
+  const randomBytes = Array.from({ length: 16 }, () => 
+    Math.floor(Math.random() * 16).toString(16)
+  ).join('')
+  return timestamp + randomBytes
+}
+
+// Validate application update permissions based on type and user role
+export function validateUpdatePermissions(applicationType: string, userRoles: string[]): boolean {
+  const typePermissions: { [key: string]: string[] } = {
+    'whitelist': ['1422323250339250206'], // Whitelist role
+    'staff': ['1422323250339250206'], // Admin roles
+    'wlmodtager': ['1422323250339250206'],
+    'cc': ['1422323250339250206'], 
+    'bande': ['1422323250339250206'],
+    'firma': ['1422323250339250206']
+  }
+
+  const requiredRoles = typePermissions[applicationType] || ['1422323250339250206']
+  return requiredRoles.some(role => userRoles.includes(role))
 }
