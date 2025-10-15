@@ -240,7 +240,7 @@ export const applicationTypes: ApplicationType[] = [
     id: "Betatester",
     name: "Beta Tester Ansøgning",
     description: "Ansøg om at blive en del af vores beta tester team",
-    requiredRole: "1427687620502225077", // Erstat med din Discord rolle ID
+    requiredRole: "1427973710249328692", // Erstat med din Discord rolle ID
     fields: [
       {
         id: "age",

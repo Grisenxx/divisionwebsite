@@ -253,6 +253,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             }
             
           } else if (updated.status === "rejected") {
+            // Send webhook besked for whitelist afvisninger
+            if (webhookUrl && updated.type === "whitelist") {
+              const mention = `<@${updated.discordId}>`
+              const besked = `${mention} - Din whitelist ansøgning er afvist!`
+              
+              await fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: besked })
+              })
+            }
+
             // Send DM til bruger med afvisningsgrund
             try {
               // Opret DM kanal
