@@ -119,15 +119,15 @@ export async function POST(request: NextRequest) {
       return createBlockedResponse(blockCheck.reason || "Security violation")
     }
 
-    // Rate limiting for application submissions
-    const rateLimitResult = rateLimit(ip, 3, 300000) // Max 3 applications per 5 minutes
+    // Rate limiting for application submissions - more lenient
+    const rateLimitResult = rateLimit(ip, 10, 300000) // Max 10 applications per 5 minutes (increased)
     
     if (rateLimitResult.limited) {
-      // Track rate limit violations for potential blocking
-      await detectAndBlockSpammer(ip, 'unknown', 'rate_limit')
+      console.log(`[RATE_LIMIT] IP ${ip.substring(0, 10)}... hit rate limit`)
+      // Don't auto-block for rate limits anymore - just return error
       
       return NextResponse.json(
-        { error: "For mange ansøgninger på kort tid. Prøv igen senere." },
+        { error: "For mange ansøgninger på kort tid. Prøv igen om 5 minutter." },
         { status: 429, headers: { 'Retry-After': '300' } }
       )
     }
@@ -248,9 +248,14 @@ export async function POST(request: NextRequest) {
       createdAt: { $gte: twentyFourHoursAgo.toISOString() }
     })
 
+    console.log(`[DEBUG] Checking duplicate for ${sanitizedDiscordName} (${sanitizedDiscordId}) type ${sanitizedType}`)
+    console.log(`[DEBUG] Found recent application:`, recentApplication ? "YES" : "NO")
+
     if (recentApplication) {
       const timeRemaining = new Date(new Date(recentApplication.createdAt).getTime() + 24 * 60 * 60 * 1000)
       const hoursRemaining = Math.ceil((timeRemaining.getTime() - now.getTime()) / (60 * 60 * 1000))
+
+      console.log(`[DEBUG] Blocking duplicate - ${hoursRemaining} hours remaining`)
 
       return NextResponse.json(
         {
@@ -268,7 +273,9 @@ export async function POST(request: NextRequest) {
       timestamp: { $gte: fiveMinutesAgo }
     })
 
-    if (recentIpApplications >= 3) {
+    console.log(`[DEBUG] Recent IP applications (${ip.substring(0, 10)}...): ${recentIpApplications} in last 5 minutes`)
+
+    if (recentIpApplications >= 10) { // Increased from 3 to 10
       return NextResponse.json(
         { error: "For mange ansøgninger fra denne IP. Prøv igen om 5 minutter." },
         { status: 429 }
@@ -282,6 +289,12 @@ export async function POST(request: NextRequest) {
       type: sanitizedType,
       timestamp: now,
       userAgent: request.headers.get('user-agent') || 'unknown'
+    })
+
+    // Clean up old submission records (older than 1 hour) to prevent database bloat
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+    await db.collection("application_submissions").deleteMany({
+      timestamp: { $lt: oneHourAgo }
     })
 
     // Create secure application object

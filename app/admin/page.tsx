@@ -27,7 +27,7 @@ export default function AdminPage() {
       case "staff":
         return hasRole("1427628590580895825") // Kun staff
       case "wlmodtager":
-        return hasRole("1425185680065298523") // Kun whitelist modtager
+        return hasRole("1427628590580895825") // Kun staff (ikke whitelist modtager)
       case "cc":
         return hasRole("1427628590580895825") // Kun staff
       case "bande":

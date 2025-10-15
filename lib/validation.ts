@@ -114,7 +114,7 @@ export function validateUpdatePermissions(applicationType: string, userRoles: st
   const typePermissions: { [key: string]: string[] } = {
     'whitelist': ['1425185680065298523'], // Kun whitelist modtager rolle
     'staff': ['1427628590580895825'], // Kun staff rolle
-    'wlmodtager': ['1425185680065298523'], // Kun whitelist modtager rolle
+    'wlmodtager': ['1427628590580895825'], // Kun staff rolle (ikke whitelist modtager rolle)
     'cc': ['1427628590580895825'], // Kun staff rolle
     'bande': ['1427628590580895825'], // Kun staff rolle
     'firma': ['1427628590580895825'], // Kun staff rolle

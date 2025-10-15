@@ -336,7 +336,7 @@ export const applicationTypes: ApplicationType[] = [
     id: "wlmodtager",
     name: "Whitelist Modtager",
     description: "Ansøg om at blive whitelist modtager",
-    requiredRole: "1425185680065298523", // Whitelist modtager rolle ID
+    requiredRole: "1427628590580895825", // Staff rolle (kun staff kan se wlmodtager ansøgninger)
     fields: [
       {
         id: "alder",
