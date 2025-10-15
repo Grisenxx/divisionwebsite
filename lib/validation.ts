@@ -118,7 +118,7 @@ export function validateUpdatePermissions(applicationType: string, userRoles: st
     'cc': ['1422323250339250206'], 
     'bande': ['1422323250339250206'],
     'firma': ['1422323250339250206'],
-    'Betatester': ['1422323250339250206'] // Admin rolle for beta tester
+    'Betatester': ['1422323250339250206', '1427973710249328692'] // Admin og beta test admin roller
   }
 
   const requiredRoles = typePermissions[applicationType] || ['1422323250339250206']

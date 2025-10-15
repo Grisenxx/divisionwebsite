@@ -73,6 +73,16 @@ export async function GET(request: NextRequest) {
       .limit(100) // Prevent excessive data exposure
       .toArray()
 
+    console.log(`[DEBUG] Found ${applications.length} applications for type: ${type || 'all'}`)
+    if (type === "Betatester") {
+      console.log(`[DEBUG] Beta Tester applications:`, applications.map(app => ({
+        id: app.id,
+        discordName: app.discordName,
+        status: app.status,
+        createdAt: app.createdAt
+      })))
+    }
+
     return NextResponse.json(applications)
   } catch (err) {
     console.error("MongoDB fetch error:", err)
@@ -271,12 +281,8 @@ export async function POST(request: NextRequest) {
     // Save application to database
     try {
       await db.collection("applications").insertOne(application)
-      console.log("[SECURITY] Application submitted:", { 
-        type: sanitizedType, 
-        discordId: sanitizedDiscordId,
-        ip: ip.substring(0, 10) + "...", // Partial IP for logging
-        timestamp: now
-      })
+      console.log(`[SUCCESS] ${sanitizedType} application submitted by ${sanitizedDiscordName} (${sanitizedDiscordId})`)
+      console.log(`[DEBUG] Application ID: ${application.id}`)
     } catch (err) {
       console.error("MongoDB insert error:", err)
       return NextResponse.json({ error: "Databasefejl" }, { status: 500 })

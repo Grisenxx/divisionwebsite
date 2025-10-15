@@ -24,12 +24,16 @@ export default function AdminPage() {
     if (user) {
       console.log("[DEBUG] User roles:", user.roles)
       
-      // Special handling for whitelist applications - allow multiple roles
+      // Special handling for whitelist and beta tester applications - allow multiple roles
       const hasWhitelistAccess = (type: any) => {
         if (type.id === "whitelist") {
           return hasRole("1422323250339250206") || // whitelisted
                  hasRole("1427634524673544232") || // whitelist modtager  
                  hasRole("1427628590580895825")    // staff
+        }
+        if (type.id === "Betatester") {
+          return hasRole("1422323250339250206") || // admin
+                 hasRole("1427973710249328692")    // beta test admin
         }
         return type.requiredRole ? hasRole(type.requiredRole) : true
       }
@@ -85,16 +89,20 @@ export default function AdminPage() {
 
   const currentType = applicationTypes.find((t) => t.id === selectedType)
   
-  // Special handling for whitelist applications - allow multiple roles
-  const hasWhitelistAccess = (type: any) => {
-    if (type.id === "whitelist") {
-      return hasRole("1422323250339250206") || // whitelisted
-             hasRole("1427634524673544232") || // whitelist modtager  
-             hasRole("1427628590580895825")    // staff
-    }
-    return type.requiredRole ? hasRole(type.requiredRole) : true
-  }
-  
+      // Special handling for whitelist and beta tester applications - allow multiple roles
+      const hasWhitelistAccess = (type: any) => {
+        if (type.id === "whitelist") {
+          return hasRole("1422323250339250206") || // whitelisted
+                 hasRole("1427634524673544232") || // whitelist modtager  
+                 hasRole("1427628590580895825")    // staff
+        }
+        if (type.id === "Betatester") {
+          return hasRole("1422323250339250206") || // admin
+                 hasRole("1427973710249328692")    // beta test admin
+        }
+        return type.requiredRole ? hasRole(type.requiredRole) : true
+      }
+      
   const hasAccess = currentType ? hasWhitelistAccess(currentType) : true
 
   // Tjek om brugeren har adgang til mindst én ansøgningstype

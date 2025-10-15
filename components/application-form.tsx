@@ -66,6 +66,8 @@ export function ApplicationForm({ applicationType, user }: ApplicationFormProps)
       fields: formFields,
     }
 
+    console.log(`[DEBUG] Submitting ${applicationType.id} application:`, data)
+
     try {
       const response = await fetch("/api/applications", {
         method: "POST",
