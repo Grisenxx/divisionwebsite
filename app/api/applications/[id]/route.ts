@@ -103,6 +103,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
     
     // Secure database update with additional validation
+    console.log(`[DEBUG] Opdaterer ansøgning ${sanitizedId} med status: ${status}`)
     const result = await db.collection("applications").updateOne(
       { 
         id: sanitizedId,
@@ -110,6 +111,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       }, 
       { $set: updateData }
     )
+    
+    console.log(`[DEBUG] Database update result - matchedCount: ${result.matchedCount}, modifiedCount: ${result.modifiedCount}`)
     
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: "Ansøgning ikke fundet eller allerede behandlet" }, { status: 404 })
@@ -159,6 +162,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
             // Opret privat kanal for visse ansøgningstyper (inkl. wlmodtager)
             const channelTypes = ["bande", "firma", "staff", "wlmodtager", "cc", "Betatester"]
+            console.log(`[DEBUG] Godkendt ${updated.type} ansøgning - skal oprette kanal: ${channelTypes.includes(updated.type)}`)
             if (channelTypes.includes(updated.type)) {
               const categoryMapping: { [key: string]: string } = {
                 bande: process.env.DISCORD_BANDE_CATEGORY_ID || "",
@@ -171,6 +175,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               
               const categoryId = categoryMapping[updated.type]
               const channelName = `${updated.type}-${updated.discordName.split('#')[0].toLowerCase()}`
+              
+              console.log(`[DEBUG] Category ID for ${updated.type}: ${categoryId}`)
+              console.log(`[DEBUG] Channel navn: ${channelName}`)
               
               if (categoryId) {
                 const channelResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}/channels`, {

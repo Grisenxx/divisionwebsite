@@ -80,8 +80,33 @@ JWT_SECRET=ECHfIEHQ8C1Yhdkp_rnG-7K5TIJ9esA7nGv1oeVapS0TMgFB_tDcpvu8WmODeYk6gC8BF
 NEXTAUTH_SECRET=5SVuHHSW5erVTeWvSnOu3SbiYlzOArmIlgXpk7MOAQr1rIz9qbKQCSPaB49rKrDZkMJwUODED4O4Ii5Fbje-zQ
 RATE_LIMIT_MAX=10
 RATE_LIMIT_WINDOW_MS=60000
-# Tilføj alle roller der skal have admin adgang - whitelist, whitelist modtager og staff roller
+
+# Admin adgang - tilføj alle roller der skal have admin adgang
 ADMIN_ROLE_IDS=1422323250339250206,1427634524673544232,1427628590580895825
+
+# Discord Bot Configuration
+DISCORD_BOT_TOKEN=your_bot_token
+DISCORD_GUILD_ID=your_guild_id
+
+# Discord kategorier hvor private kanaler oprettes (påkrævet for kanal oprettelse)
+DISCORD_WLMODTAGER_CATEGORY_ID=your_wl_modtager_category_id
+DISCORD_STAFF_CATEGORY_ID=your_staff_category_id
+DISCORD_BANDE_CATEGORY_ID=your_bande_category_id
+DISCORD_FIRMA_CATEGORY_ID=your_firma_category_id
+DISCORD_CC_CATEGORY_ID=your_cc_category_id
+DISCORD_BETATEST_CATEGORY_ID=your_betatest_category_id
+
+# Discord roller der skal tagges i de private kanaler (påkrævet for besked til ansvarlige)
+DISCORD_WLMODTAGER_RESPONSIBLE_ROLE_ID=your_wl_responsible_role_id
+DISCORD_STAFF_RESPONSIBLE_ROLE_ID=your_staff_responsible_role_id
+DISCORD_BANDE_RESPONSIBLE_ROLE_ID=your_bande_responsible_role_id
+DISCORD_FIRMA_RESPONSIBLE_ROLE_ID=your_firma_responsible_role_id
+DISCORD_CC_RESPONSIBLE_ROLE_ID=your_cc_responsible_role_id
+DISCORD_BETATEST_RESPONSIBLE_ROLE_ID=your_betatest_responsible_role_id
+
+# Discord webhooks til logging (valgfrit - kan bruge fallback)
+DISCORD_WLMODTAGER_LOGS_WEBHOOK_URL=your_wl_logs_webhook_url
+DISCORD_LOGS_WEBHOOK_URL=your_fallback_logs_webhook_url
 ```
 
 ## 🚨 CRITICAL SECURITY NOTES
