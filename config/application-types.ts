@@ -431,9 +431,9 @@ export const applicationTypes: ApplicationType[] = [
   },
   {
     id: "whitelist",
-    name: "Whitelist Ansøgning",
+    name: "Whitelist Ansøgning", 
     description: "Ansøg om whitelist til serveren",
-    requiredRole: "1425185680065298523", // Erstat med din Discord rolle ID
+    // Ingen requiredRole - alle med admin adgang kan se whitelist ansøgninger
     fields: [
       {
         id: "alder",
