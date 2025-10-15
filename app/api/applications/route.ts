@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import clientPromise from "@/lib/mongodb"
 import { verifyAdminAuth, rateLimit } from "@/lib/security"
-import { sanitizeInput, sanitizeMongoQuery, generateSecureId, applicationSubmissionSchema } from "@/lib/validation"
+import { sanitizeInput, sanitizeMongoQuery, generateSecureId, applicationSubmissionSchema, validateUpdatePermissions } from "@/lib/validation"
 import { detectAndBlockSpammer, isIpBlocked, createBlockedResponse } from "@/lib/spam-protection"
 
 // In-memory fallback (for development only - production uses database)
@@ -25,13 +25,24 @@ export async function GET(request: NextRequest) {
     const authResult = await verifyAdminAuth(request)
     if (authResult.error) {
       return NextResponse.json(
-        { error: "Adgang nægtet. Kun administratorer kan se ansøgninger." },
+        { error: "Adgang nægtet. Kun specifikke admin roller kan se ansøgninger." },
         { status: authResult.status }
       )
     }
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get("type")
+
+    // Additional check: verify user has permission for the specific application type being requested
+    if (type && authResult.user) {
+      const hasTypePermission = validateUpdatePermissions(type, authResult.user.roles)
+      if (!hasTypePermission) {
+        return NextResponse.json(
+          { error: `Du har ikke rettigheder til at se ${type} ansøgninger.` },
+          { status: 403 }
+        )
+      }
+    }
 
     const client = await clientPromise
     const db = client.db("divisionhjemmeside")

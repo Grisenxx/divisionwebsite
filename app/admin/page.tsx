@@ -19,18 +19,26 @@ export default function AdminPage() {
   const [selectedType, setSelectedType] = useState("")
   const [activeTab, setActiveTab] = useState("applications")
 
-  // Special handling for whitelist and beta tester applications - allow multiple roles
-  const hasWhitelistAccess = (type: any) => {
-    if (type.id === "whitelist") {
-      return hasRole("1422323250339250206") || // whitelisted
-             hasRole("1427634524673544232") || // whitelist modtager  
-             hasRole("1427628590580895825")    // staff
+  // Check if user has access to specific application types - STRICT permissions
+  const hasApplicationAccess = (type: any) => {
+    switch (type.id) {
+      case "whitelist":
+        return hasRole("1427634524673544232") // Kun whitelist modtager
+      case "staff":
+        return hasRole("1427628590580895825") // Kun staff
+      case "wlmodtager":
+        return hasRole("1427634524673544232") // Kun whitelist modtager
+      case "cc":
+        return hasRole("1427628590580895825") // Kun staff
+      case "bande":
+        return hasRole("1427628590580895825") // Kun staff
+      case "firma":
+        return hasRole("1427628590580895825") // Kun staff
+      case "Betatester":
+        return hasRole("1427973710249328692") // Kun beta test admin
+      default:
+        return false // Default ingen adgang
     }
-    if (type.id === "Betatester") {
-      return hasRole("1422323250339250206") || // admin
-             hasRole("1427973710249328692")    // beta test admin
-    }
-    return type.requiredRole ? hasRole(type.requiredRole) : true
   }
 
   useEffect(() => {
@@ -42,12 +50,12 @@ export default function AdminPage() {
         id: type.id,
         name: type.name,
         requiredRole: type.requiredRole,
-        hasAccess: hasWhitelistAccess(type)
+        hasAccess: hasApplicationAccess(type)
       })))
 
       // Set first accessible type as default if no type is selected
       if (!selectedType) {
-        const firstAccessibleType = applicationTypes.find(type => hasWhitelistAccess(type))
+        const firstAccessibleType = applicationTypes.find(type => hasApplicationAccess(type))
         if (firstAccessibleType) {
           setSelectedType(firstAccessibleType.id)
         }
@@ -121,7 +129,30 @@ export default function AdminPage() {
   }
 
   const currentType = applicationTypes.find((t) => t.id === selectedType)
-  const hasAccess = currentType ? hasWhitelistAccess(currentType) : true
+  const hasAccess = currentType ? hasApplicationAccess(currentType) : true
+
+  // Check if user has access to ANY application type
+  const hasAnyAccess = applicationTypes.some((type) => hasApplicationAccess(type))
+
+  if (!hasAnyAccess && !loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center relative">
+        <Squares 
+          speed={0.05}
+          squareSize={50}
+          direction="diagonal"
+          borderColor="rgba(59, 130, 246, 0.3)"
+          hoverFillColor="rgba(59, 130, 246, 0.1)"
+        />
+        <Card className="w-full max-w-md relative z-10">
+          <CardHeader>
+            <CardTitle>Adgang Nægtet</CardTitle>
+            <CardDescription>Du har ikke de nødvendige rettigheder til at se denne side. Kun specifikke admin roller har adgang.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
 
 
 
@@ -150,7 +181,7 @@ export default function AdminPage() {
           <TabsContent value="applications">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12 mb-12 max-w-4xl mx-auto">
               {applicationTypes.map((type) => {
-                const canView = hasWhitelistAccess(type)
+                const canView = hasApplicationAccess(type)
                 console.log(`[DEBUG] Type ${type.id} - canView: ${canView}`)
                 if (!canView) return null // Don't show types user can't access
                 

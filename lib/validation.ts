@@ -112,15 +112,15 @@ export function generateSecureId(): string {
 // Validate application update permissions based on type and user role
 export function validateUpdatePermissions(applicationType: string, userRoles: string[]): boolean {
   const typePermissions: { [key: string]: string[] } = {
-    'whitelist': ['1422323250339250206', '1427634524673544232'], // Admin og whitelist modtager roller
-    'staff': ['1422323250339250206'], // Admin roles
-    'wlmodtager': ['1422323250339250206'],
-    'cc': ['1422323250339250206'], 
-    'bande': ['1422323250339250206'],
-    'firma': ['1422323250339250206'],
-    'Betatester': ['1422323250339250206', '1427973710249328692'] // Admin og beta test admin roller
+    'whitelist': ['1427634524673544232'], // Kun whitelist modtager rolle
+    'staff': ['1427628590580895825'], // Kun staff rolle
+    'wlmodtager': ['1427634524673544232'], // Kun whitelist modtager rolle
+    'cc': ['1427628590580895825'], // Kun staff rolle
+    'bande': ['1427628590580895825'], // Kun staff rolle
+    'firma': ['1427628590580895825'], // Kun staff rolle
+    'Betatester': ['1427973710249328692'] // Kun beta test admin rolle
   }
 
-  const requiredRoles = typePermissions[applicationType] || ['1422323250339250206']
+  const requiredRoles = typePermissions[applicationType] || ['1427628590580895825'] // Default til staff rolle hvis ikke defineret
   return requiredRoles.some(role => userRoles.includes(role))
 }
