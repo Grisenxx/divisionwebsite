@@ -17,6 +17,14 @@ export const searchQuerySchema = z.object({
 
 export const applicationSubmissionSchema = z.object({
   type: z.enum(["whitelist", "staff", "wlmodtager", "cc", "bande", "firma"]),
+  discordName: z.string()
+    .min(1, "Discord navn påkrævet")
+    .max(50, "Discord navn for langt")
+    .refine(name => !name.toLowerCase().includes('@everyone'), "@everyone ikke tilladt i Discord navn")
+    .refine(name => !name.toLowerCase().includes('@here'), "@here ikke tilladt i Discord navn")
+    .refine(name => !name.startsWith('@'), "Discord navn må ikke starte med @")
+    .refine(name => !/[<>]/.test(name), "Discord navn må ikke indeholde < eller >"),
+  discordId: z.string().regex(/^\d{17,19}$/, "Ugyldigt Discord ID format"),
   fields: z.record(z.string().max(2000)) // Max 2000 chars per field
 })
 
