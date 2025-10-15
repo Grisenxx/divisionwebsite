@@ -2,7 +2,7 @@
 import { MongoClient } from "mongodb"
 
 const MONGODB_URI = process.env.MONGODB_URI
-const DATABASE_NAME = "divisionhjemmeside"
+const DATABASE_NAME = "divisionwebsite"
 
 interface Application {
   id: string
@@ -19,7 +19,7 @@ async function setupDatabase() {
   if (!MONGODB_URI) {
     console.error("❌ MONGODB_URI ikke fundet i environment variabler!")
     console.log("Tilføj din MongoDB connection string til .env.local filen:")
-    console.log("MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/divisionhjemmeside")
+    console.log("MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/divisionwebsite")
     process.exit(1)
   }
 

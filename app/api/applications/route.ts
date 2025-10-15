@@ -45,14 +45,14 @@ export async function GET(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
     
     // Secure query building
     let query: any = {}
     if (type) {
       const sanitizedType = sanitizeInput(type)
       // Validate application type against allowed types
-      const allowedTypes = ["whitelist", "staff", "wlmodtager", "cc", "bande", "firma"]
+      const allowedTypes = ["whitelist", "staff", "wlmodtager", "cc", "bande", "firma", "Betatester"]
       if (allowedTypes.includes(sanitizedType)) {
         query.type = sanitizedType
       } else {
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
 
     // CRITICAL: Database-based duplicate and spam prevention 
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
     const now = new Date()
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 

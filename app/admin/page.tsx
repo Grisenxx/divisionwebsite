@@ -35,7 +35,7 @@ export default function AdminPage() {
       case "firma":
         return hasRole("1427628590580895825") // Kun staff
       case "Betatester":
-        return hasRole("1427973710249328692") // Kun beta test admin
+        return hasRole("1427628590580895825") || hasRole("1427973710249328692") // Staff eller beta test admin
       default:
         return false // Default ingen adgang
     }

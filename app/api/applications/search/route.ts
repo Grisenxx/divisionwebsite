@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const sanitizedQuery = sanitizeInput(query)
     
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
     
     // Safer search with escaped regex and limited results
     const escapedQuery = sanitizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

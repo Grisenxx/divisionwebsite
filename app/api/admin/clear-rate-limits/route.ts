@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
 
     // Clear application_submissions collection (used for IP rate limiting)
     const submissionsResult = await db.collection("application_submissions").deleteMany({})

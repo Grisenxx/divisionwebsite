@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
 
     // Remove IP from blocked list
     const result = await db.collection("blocked_ips").deleteMany({ ip: ip })
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     const client = await clientPromise
-    const db = client.db("divisionhjemmeside")
+    const db = client.db("divisionwebsite")
 
     // Get all blocked IPs
     const blockedIps = await db.collection("blocked_ips")
