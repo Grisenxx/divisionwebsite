@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
         fields
       })
     } catch (validationError: any) {
-      // Log validation failure for security monitoring
-      await detectAndBlockSpammer(ip, discordId || 'unknown', 'malicious_content')
+      // Log validation failure for monitoring (don't auto-block for simple validation errors)
+      console.log(`[VALIDATION] Validation error from IP ${ip.substring(0, 10)}...: ${validationError.errors?.[0]?.message || "Valideringsfejl"}`)
       
       return NextResponse.json({
         error: "Ugyldig ansøgningsdata",
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Input validation and sanitization
-    const allowedTypes = ["whitelist", "staff", "wlmodtager", "cc", "bande", "firma"]
+    const allowedTypes = ["whitelist", "staff", "wlmodtager", "cc", "bande", "firma", "Betatester"]
     const sanitizedType = sanitizeInput(type)
     
     if (!allowedTypes.includes(sanitizedType)) {

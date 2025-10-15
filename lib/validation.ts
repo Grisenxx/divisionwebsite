@@ -16,7 +16,7 @@ export const searchQuerySchema = z.object({
 })
 
 export const applicationSubmissionSchema = z.object({
-  type: z.enum(["whitelist", "staff", "wlmodtager", "cc", "bande", "firma"]),
+  type: z.enum(["whitelist", "staff", "wlmodtager", "cc", "bande", "firma", "Betatester"]),
   discordName: z.string()
     .min(1, "Discord navn påkrævet")
     .max(50, "Discord navn for langt")
@@ -117,7 +117,8 @@ export function validateUpdatePermissions(applicationType: string, userRoles: st
     'wlmodtager': ['1422323250339250206'],
     'cc': ['1422323250339250206'], 
     'bande': ['1422323250339250206'],
-    'firma': ['1422323250339250206']
+    'firma': ['1422323250339250206'],
+    'Betatester': ['1422323250339250206'] // Admin rolle for beta tester
   }
 
   const requiredRoles = typePermissions[applicationType] || ['1422323250339250206']

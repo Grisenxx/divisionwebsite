@@ -28,8 +28,8 @@ export async function detectAndBlockSpammer(
       timestamp: { $gte: oneDayAgo }
     })
 
-    // Auto-block IP if too many violations
-    if (recentViolations >= 5 || violationType === 'mention_spam') {
+    // Auto-block IP if too many violations (increased threshold to be less aggressive)
+    if (recentViolations >= 10 || violationType === 'mention_spam') {
       await db.collection("blocked_ips").insertOne({
         ip: ip,
         discordId: discordId,
@@ -53,9 +53,9 @@ export async function detectAndBlockSpammer(
 function getSeverityLevel(violationType: string): number {
   switch (violationType) {
     case 'mention_spam': return 10 // Critical
-    case 'malicious_content': return 8 // High  
-    case 'rate_limit': return 5 // Medium
-    case 'duplicate_submission': return 3 // Low
+    case 'malicious_content': return 6 // High (reduced)  
+    case 'rate_limit': return 2 // Low (reduced from medium)
+    case 'duplicate_submission': return 1 // Very low
     default: return 1
   }
 }
