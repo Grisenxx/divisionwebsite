@@ -433,7 +433,8 @@ export const applicationTypes: ApplicationType[] = [
     id: "whitelist",
     name: "Whitelist Ansøgning", 
     description: "Ansøg om whitelist til serveren",
-    // Ingen requiredRole - alle med admin adgang kan se whitelist ansøgninger
+    // Specificer rollerne der kan se whitelist ansøgninger - du kan tilføje flere roller her
+    requiredRole: "1422323250339250206", // Start med basic whitelisted rolle
     fields: [
       {
         id: "alder",

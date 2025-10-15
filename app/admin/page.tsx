@@ -20,8 +20,28 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("applications")
 
   useEffect(() => {
-    console.log("[v0] Admin page - user:", user, "loading:", loading)
-  }, [user, loading])
+    console.log("[DEBUG] Admin page - user:", user, "loading:", loading)
+    if (user) {
+      console.log("[DEBUG] User roles:", user.roles)
+      
+      // Special handling for whitelist applications - allow multiple roles
+      const hasWhitelistAccess = (type: any) => {
+        if (type.id === "whitelist") {
+          return hasRole("1422323250339250206") || // whitelisted
+                 hasRole("1427634524673544232") || // whitelist modtager  
+                 hasRole("1427628590580895825")    // staff
+        }
+        return type.requiredRole ? hasRole(type.requiredRole) : true
+      }
+      
+      console.log("[DEBUG] Application types access:", applicationTypes.map(type => ({
+        id: type.id,
+        name: type.name,
+        requiredRole: type.requiredRole,
+        hasAccess: hasWhitelistAccess(type)
+      })))
+    }
+  }, [user, loading, hasRole])
 
   if (loading) {
     return (
@@ -64,10 +84,21 @@ export default function AdminPage() {
   }
 
   const currentType = applicationTypes.find((t) => t.id === selectedType)
-  const hasAccess = currentType?.requiredRole ? hasRole(currentType.requiredRole) : true
+  
+  // Special handling for whitelist applications - allow multiple roles
+  const hasWhitelistAccess = (type: any) => {
+    if (type.id === "whitelist") {
+      return hasRole("1422323250339250206") || // whitelisted
+             hasRole("1427634524673544232") || // whitelist modtager  
+             hasRole("1427628590580895825")    // staff
+    }
+    return type.requiredRole ? hasRole(type.requiredRole) : true
+  }
+  
+  const hasAccess = currentType ? hasWhitelistAccess(currentType) : true
 
   // Tjek om brugeren har adgang til mindst én ansøgningstype
-  const hasAnyAccess = applicationTypes.some((type) => !type.requiredRole || hasRole(type.requiredRole))
+  const hasAnyAccess = applicationTypes.some((type) => hasWhitelistAccess(type))
 
   if (!hasAnyAccess) {
     return (

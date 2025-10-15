@@ -26,7 +26,7 @@ export async function verifyAdminAuth(request: NextRequest, adminInfo?: any) {
     // CRITICAL: Verify roles server-side via Discord API
     const botToken = process.env.DISCORD_BOT_TOKEN
     const guildId = process.env.DISCORD_GUILD_ID
-    const adminRoleIds = process.env.ADMIN_ROLE_IDS?.split(',') || ['1422323250339250206', '1427634524673544232'] // Admin og whitelist modtager roller
+    const adminRoleIds = process.env.ADMIN_ROLE_IDS?.split(',') || ['1422323250339250206', '1427634524673544232', '1427628590580895825'] // Whitelist, whitelist modtager og staff roller
 
     if (!botToken || !guildId) {
       return { error: "Discord konfiguration mangler", status: 500 }
@@ -50,6 +50,11 @@ export async function verifyAdminAuth(request: NextRequest, adminInfo?: any) {
 
     // Check if user has any admin role
     const hasAdminRole = adminRoleIds.some(roleId => currentRoles.includes(roleId))
+    
+    // Debug logging
+    console.log(`[DEBUG] User ${user.id} roles:`, currentRoles)
+    console.log(`[DEBUG] Required admin roles:`, adminRoleIds)
+    console.log(`[DEBUG] Has admin role:`, hasAdminRole)
     
     if (!hasAdminRole) {
       return { error: "Utilstrækkelige rettigheder", status: 403 }

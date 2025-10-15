@@ -75,12 +75,13 @@
 ## Environment Variables Added
 
 ```bash
-# SECURE Environment Variables (Example)
+# SECURE Environment Variables (Example)  
 JWT_SECRET=ECHfIEHQ8C1Yhdkp_rnG-7K5TIJ9esA7nGv1oeVapS0TMgFB_tDcpvu8WmODeYk6gC8BFofEgqyLgmw40XlmqA
 NEXTAUTH_SECRET=5SVuHHSW5erVTeWvSnOu3SbiYlzOArmIlgXpk7MOAQr1rIz9qbKQCSPaB49rKrDZkMJwUODED4O4Ii5Fbje-zQ
 RATE_LIMIT_MAX=10
 RATE_LIMIT_WINDOW_MS=60000
-ADMIN_ROLE_IDS=1422323250339250206,1427634524673544232
+# Tilføj alle roller der skal have admin adgang - whitelist, whitelist modtager og staff roller
+ADMIN_ROLE_IDS=1422323250339250206,1427634524673544232,1427628590580895825
 ```
 
 ## 🚨 CRITICAL SECURITY NOTES
