@@ -51,9 +51,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       )
     }
 
-    // Sanitize and validate application ID
+    // Sanitize application ID (support multiple ID formats)
     const sanitizedId = sanitizeInput(id)
-    if (!sanitizedId.match(/^[a-f0-9]{24}$/i)) {
+    // Support both ObjectId format (24 hex chars) and custom format (timestamp-random)
+    const isValidId = sanitizedId.match(/^[a-f0-9]{24}$/i) || sanitizedId.match(/^\d{13,}-[a-z0-9]+$/i)
+    if (!isValidId) {
       return NextResponse.json(
         { error: "Ugyldigt ansøgnings-ID format" },
         { status: 400 }
@@ -155,15 +157,16 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
               }
             }
 
-            // Opret privat kanal for visse ansøgningstyper
-            const channelTypes = ["bande", "firma", "staff", "wlmodtager", "cc"]
+            // Opret privat kanal for visse ansøgningstyper (inkl. wlmodtager)
+            const channelTypes = ["bande", "firma", "staff", "wlmodtager", "cc", "Betatester"]
             if (channelTypes.includes(updated.type)) {
               const categoryMapping: { [key: string]: string } = {
                 bande: process.env.DISCORD_BANDE_CATEGORY_ID || "",
                 firma: process.env.DISCORD_FIRMA_CATEGORY_ID || "",
                 staff: process.env.DISCORD_STAFF_CATEGORY_ID || "",
                 wlmodtager: process.env.DISCORD_WLMODTAGER_CATEGORY_ID || "",
-                cc: process.env.DISCORD_CC_CATEGORY_ID || ""
+                cc: process.env.DISCORD_CC_CATEGORY_ID || "",
+                Betatester: process.env.DISCORD_BETATEST_CATEGORY_ID || ""
               }
               
               const categoryId = categoryMapping[updated.type]
@@ -205,7 +208,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
                     firma: process.env.DISCORD_FIRMA_RESPONSIBLE_ROLE_ID || "",
                     staff: process.env.DISCORD_STAFF_RESPONSIBLE_ROLE_ID || "",
                     wlmodtager: process.env.DISCORD_WLMODTAGER_RESPONSIBLE_ROLE_ID || "",
-                    cc: process.env.DISCORD_CC_RESPONSIBLE_ROLE_ID || ""
+                    cc: process.env.DISCORD_CC_RESPONSIBLE_ROLE_ID || "",
+                    Betatester: process.env.DISCORD_BETATEST_RESPONSIBLE_ROLE_ID || ""
                   }
                   
                   const responsibleRoleId = responsibleRoleMapping[updated.type]
@@ -308,7 +312,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           wlmodtager: process.env.DISCORD_WLMODTAGER_LOGS_WEBHOOK_URL || "",
           cc: process.env.DISCORD_CC_LOGS_WEBHOOK_URL || "",
           bande: process.env.DISCORD_BANDE_LOGS_WEBHOOK_URL || "",
-          firma: process.env.DISCORD_FIRMA_LOGS_WEBHOOK_URL || ""
+          firma: process.env.DISCORD_FIRMA_LOGS_WEBHOOK_URL || "",
+          Betatester: process.env.DISCORD_BETATEST_LOGS_WEBHOOK_URL || ""
         }
         
         const specificWebhookUrl = webhookMapping[updated.type]
