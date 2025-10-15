@@ -48,7 +48,7 @@ export default function HomePage() {
             className="mb-12"
           >
             <p className="text-base md:text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed font-normal">
-              Bliv en del af Danmarks mest professionelle gaming community
+              Bliv en del af Danmarks mest professionelle FiveM community
             </p>
           </motion.div>
 
