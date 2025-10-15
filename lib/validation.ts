@@ -112,9 +112,9 @@ export function generateSecureId(): string {
 // Validate application update permissions based on type and user role
 export function validateUpdatePermissions(applicationType: string, userRoles: string[]): boolean {
   const typePermissions: { [key: string]: string[] } = {
-    'whitelist': ['1427634524673544232'], // Kun whitelist modtager rolle
+    'whitelist': ['1425185680065298523'], // Kun whitelist modtager rolle
     'staff': ['1427628590580895825'], // Kun staff rolle
-    'wlmodtager': ['1427634524673544232'], // Kun whitelist modtager rolle
+    'wlmodtager': ['1425185680065298523'], // Kun whitelist modtager rolle
     'cc': ['1427628590580895825'], // Kun staff rolle
     'bande': ['1427628590580895825'], // Kun staff rolle
     'firma': ['1427628590580895825'], // Kun staff rolle

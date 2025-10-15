@@ -23,11 +23,11 @@ export default function AdminPage() {
   const hasApplicationAccess = (type: any) => {
     switch (type.id) {
       case "whitelist":
-        return hasRole("1427634524673544232") // Kun whitelist modtager
+        return hasRole("1425185680065298523") // Kun whitelist modtager
       case "staff":
         return hasRole("1427628590580895825") // Kun staff
       case "wlmodtager":
-        return hasRole("1427634524673544232") // Kun whitelist modtager
+        return hasRole("1425185680065298523") // Kun whitelist modtager
       case "cc":
         return hasRole("1427628590580895825") // Kun staff
       case "bande":
@@ -105,7 +105,7 @@ export default function AdminPage() {
 
   // First check if user has ANY admin role at all
   const isAdmin = user?.roles?.some(role => 
-    ['1422323250339250206', '1427634524673544232', '1427628590580895825', '1427973710249328692'].includes(role)
+    ['1425185680065298523', '1427628590580895825', '1427973710249328692'].includes(role)
   ) ?? false
 
   if (!isAdmin) {

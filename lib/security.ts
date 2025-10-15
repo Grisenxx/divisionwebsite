@@ -26,7 +26,7 @@ export async function verifyAdminAuth(request: NextRequest, adminInfo?: any) {
     // CRITICAL: Verify roles server-side via Discord API
     const botToken = process.env.DISCORD_BOT_TOKEN
     const guildId = process.env.DISCORD_GUILD_ID
-    const adminRoleIds = process.env.ADMIN_ROLE_IDS?.split(',') || ['1427634524673544232', '1427628590580895825', '1427973710249328692'] // Kun whitelist modtager, staff og beta test admin roller - IKKE grundlæggende whitelist
+    const adminRoleIds = process.env.ADMIN_ROLE_IDS?.split(',') || ['1425185680065298523', '1427628590580895825', '1427973710249328692'] // Kun whitelist modtager, staff og beta test admin roller - IKKE grundlæggende whitelist
 
     if (!botToken || !guildId) {
       return { error: "Discord konfiguration mangler", status: 500 }

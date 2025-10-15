@@ -336,7 +336,7 @@ export const applicationTypes: ApplicationType[] = [
     id: "wlmodtager",
     name: "Whitelist Modtager",
     description: "Ansøg om at blive whitelist modtager",
-    requiredRole: "1427634524673544232", // Erstat med din Discord rolle ID
+    requiredRole: "1425185680065298523", // Whitelist modtager rolle ID
     fields: [
       {
         id: "alder",
